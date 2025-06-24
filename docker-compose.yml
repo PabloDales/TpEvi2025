@@ -1,0 +1,53 @@
+
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-mysecretpassword}
+      MYSQL_DATABASE: tasks_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD:-mypassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_network
+
+  backend:
+    build: ./backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: db
+      # Nombre de la base de datos.
+      DB_NAME: tasks_db
+      DB_USER: user
+      DB_PASSWORD: ${MYSQL_USER_PASSWORD:-mypassword}
+
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  adminer:
+    image: adminer:4.8.1
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+    depends_on:
+      - db
+
+volumes:
+  db_data:
+
+networks:
+  # Red personalizada para la comunicación entre los servicios.
+  app_network:
+    driver: bridge # Tipo de red (por defecto, pero explícito para claridad).
